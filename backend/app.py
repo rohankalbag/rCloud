@@ -128,6 +128,8 @@ def list_files():
     if 'path' not in data:
         return jsonify({'message': 'Invalid request! parameter "path" not specified'}), 400
     rel_path = data["path"]
+    if not os.path.exists(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user'], rel_path)):
+        return jsonify({'message': 'No such directory path exists'}), 400
     files = os.listdir(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user'], rel_path))
     directories = [f for f in files if os.path.isdir(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user'], rel_path, f))]
     files = [f for f in files if os.path.isfile(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user'], rel_path, f))]
@@ -146,6 +148,37 @@ def make_directory():
         return jsonify({'message': 'Directory created successfully!'})
     else:
         return jsonify({'message': 'Directory already exists!'}), 400
+
+@app.route('/rmfile', methods=['POST'])
+def remove_file():
+    if 'user' not in session:
+        return jsonify({'message': 'Please login to remove files!'}), 401
+    data = request.json
+    if 'path' not in data:
+        return jsonify({'message': 'Invalid request! parameter "path" not specified'}), 400
+    if 'filename' not in data:
+        return jsonify({'message': 'Invalid request! parameter "filename" not specified'}), 400
+    rel_path = data["path"]
+    file_name = data["filename"]
+    if not os.path.exists(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user'], rel_path, file_name)):
+        return jsonify({'message': 'No such file exists!'}), 400
+    os.remove(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user'], rel_path, file_name))
+    return jsonify({'message': 'File removed successfully!'})
+
+@app.route('/rmdir', methods=['POST'])
+def remove_directory():
+    if 'user' not in session:
+        return jsonify({'message': 'Please login to remove directories!'}), 401
+    data = request.json
+    if 'path' not in data:
+        return jsonify({'message': 'Invalid request! parameter "path" not specified'}), 400
+    rel_path = data["path"]
+    if not os.path.exists(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user'], rel_path)):
+        return jsonify({'message': 'No such directory exists!'}), 400
+    if os.listdir(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user'], rel_path)):
+        return jsonify({'message': 'Directory is not empty!'}), 400
+    os.rmdir(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user'], rel_path))
+    return jsonify({'message': 'Directory removed successfully!'})
 
 if __name__ == '__main__':
     app.run(debug=True, port=3000)
