@@ -23,8 +23,8 @@ export default function TabLayout() {
           ),
         }}
       />
-      
-       <Tabs.Screen
+
+      <Tabs.Screen
         name="register"
         options={{
           title: 'Register',
@@ -34,12 +34,22 @@ export default function TabLayout() {
         }}
       />
 
-    <Tabs.Screen
+      <Tabs.Screen
         name="login"
         options={{
           title: 'Login',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'log-in' : 'log-in-outline'} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="users"
+        options={{
+          title: 'Users',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'people' : 'people-outline'} color={color} />
           ),
         }}
       />
