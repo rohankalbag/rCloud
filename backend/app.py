@@ -6,6 +6,7 @@ from flask_cors import CORS
 import os
 from flask import session
 import json
+from flask_wtf.csrf import generate_csrf
 
 app = Flask(__name__)
 
@@ -53,6 +54,9 @@ def home():
 def get_users():
     if 'user' not in session:
         return jsonify({'message': 'Please login to view users!'}), 401
+    csrf_token = request.headers.get('X-CSRFToken')
+    if not csrf_token or csrf_token != session.get('csrf_token'):
+        return jsonify({'message': 'Invalid CSRF token'}), 403 
     users = User.query.all()
     return jsonify([(user.username, user.dob.strftime("%-d %B %Y")) for user in users])
 
@@ -61,7 +65,6 @@ def get_users():
 def register():
     if request.method == 'OPTIONS':
         return jsonify({'message': 'CORS OK'}), 200
-
     data = request.json
     username = data['username']
     password = sha256(data['password'].encode()).hexdigest()
@@ -79,8 +82,12 @@ def register():
     if not os.path.exists(user_cloud_path):
         os.mkdir(user_cloud_path)
     session['user'] = user.username
+    session['csrf_token'] = generate_csrf()
 
-    return jsonify({'message': 'User registered successfully!'})
+    return jsonify({
+        'message': 'User registered successfully!',
+        'csrf_token': session['csrf_token']
+    })
 
 
 @app.route('/login', methods=['POST', 'OPTIONS'])
@@ -95,7 +102,11 @@ def login():
     user = User.query.filter_by(username=username, password=password).first()
     if user:
         session['user'] = user.username
-        return jsonify({'message': 'Login successful!'})
+        session['csrf_token'] = generate_csrf()
+        return jsonify({
+            'message': 'Login successful!',
+            'csrf_token': session['csrf_token']
+        })
     else:
         return jsonify({'message': 'Invalid credentials!'}), 401
 
@@ -110,6 +121,9 @@ def logout():
 def upload_file():
     if 'user' not in session:
         return jsonify({'message': 'Please login to upload files!'}), 401
+    csrf_token = request.headers.get('X-CSRFToken')
+    if not csrf_token or csrf_token != session.get('csrf_token'):
+        return jsonify({'message': 'Invalid CSRF token'}), 403
 
     user = User.query.filter_by(username=session['user']).first()
     if 'file' not in request.files:
@@ -136,29 +150,37 @@ def upload_file():
     return jsonify({'message': 'File uploaded successfully!'})
 
 
-@app.route('/list', methods=['POST'])
+@app.route('/list', methods=['POST', 'OPTIONS'])
 def list_files():
+    if request.method == 'OPTIONS':
+        return jsonify({'message': 'CORS OK'}), 200
     if 'user' not in session:
         return jsonify({'message': 'Please login to list files!'}), 401
+    csrf_token = request.headers.get('X-CSRFToken')
+    if not csrf_token or csrf_token != session.get('csrf_token'):
+        return jsonify({'error': 'Invalid CSRF token'}), 403
     data = request.json
     if 'path' not in data:
         return jsonify({'message': 'Invalid request! parameter "path" not specified'}), 400
     rel_path = data["path"]
-    if not os.path.exists(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user'], rel_path)):
+    if not os.path.exists(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user']) + rel_path):
         return jsonify({'message': 'No such directory path exists'}), 400
     files = os.listdir(os.path.join(
-        CLOUD_STORAGE_ROOT_PATH, session['user'], rel_path))
+        CLOUD_STORAGE_ROOT_PATH, session['user']) + rel_path)
     directories = [f for f in files if os.path.isdir(os.path.join(
-        CLOUD_STORAGE_ROOT_PATH, session['user'], rel_path, f))]
+        CLOUD_STORAGE_ROOT_PATH, session['user']) + rel_path + f"/{f}")]
     files = [f for f in files if os.path.isfile(os.path.join(
-        CLOUD_STORAGE_ROOT_PATH, session['user'], rel_path, f))]
+        CLOUD_STORAGE_ROOT_PATH, session['user']) + rel_path + f"/{f}")]
     return jsonify({'directories': directories, 'files': files})
 
 
 @app.route('/mkdir', methods=['POST'])
 def make_directory():
     if 'user' not in session:
-        return jsonify({'message': 'Please login to create directories!'}), 401
+        return jsonify({'message': 'Please login to create directories!'}), 401 
+    csrf_token = request.headers.get('X-CSRFToken')
+    if not csrf_token or csrf_token != session.get('csrf_token'):
+        return jsonify({'error': 'Invalid CSRF token'}), 403
     data = request.json
     if 'path' not in data:
         return jsonify({'message': 'Invalid request! parameter "path" not specified'}), 400
@@ -175,6 +197,9 @@ def make_directory():
 def remove_file():
     if 'user' not in session:
         return jsonify({'message': 'Please login to remove files!'}), 401
+    csrf_token = request.headers.get('X-CSRFToken')
+    if not csrf_token or csrf_token != session.get('csrf_token'):
+        return jsonify({'error': 'Invalid CSRF token'}), 403
     data = request.json
     if 'path' not in data:
         return jsonify({'message': 'Invalid request! parameter "path" not specified'}), 400
@@ -193,6 +218,9 @@ def remove_file():
 def remove_directory():
     if 'user' not in session:
         return jsonify({'message': 'Please login to remove directories!'}), 401
+    csrf_token = request.headers.get('X-CSRFToken')
+    if not csrf_token or csrf_token != session.get('csrf_token'):
+        return jsonify({'error': 'Invalid CSRF token'}), 403
     data = request.json
     if 'path' not in data:
         return jsonify({'message': 'Invalid request! parameter "path" not specified'}), 400

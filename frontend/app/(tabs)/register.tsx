@@ -15,7 +15,7 @@ export default function RegisterScreen() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [dob, setDob] = useState('');
-    const { user, setUser } = useAppContext();
+    const { user, setUser, csrfToken, setcsrfToken} = useAppContext();
 
     const clearForm = () => {
         setUsername('');
@@ -51,6 +51,7 @@ export default function RegisterScreen() {
                     alert(data.message);
                     if (data.message === 'User registered successfully!') {
                         setUser(username);
+                        setcsrfToken(data.csrf_token);
                     }
                     clearForm();
                 }

@@ -11,7 +11,7 @@ import { useAppContext } from '@/components/StateContext';
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const { user, setUser } = useAppContext();
+  const { user, setUser, csrfToken, setcsrfToken } = useAppContext();
 
   const clearForm = () => {
     setUsername('');
@@ -45,6 +45,7 @@ export default function LoginScreen() {
           alert(data.message);
           if (data.message === 'Login successful!') {
             setUser(username);
+            setcsrfToken(data.csrf_token);
           }
           clearForm();
         })
@@ -95,7 +96,7 @@ export default function LoginScreen() {
           <ThemedText style={{ color: 'black' }}> Submit </ThemedText>
         </Pressable>
 
-        <ExternalLink href="/login">
+        <ExternalLink href="/register">
           <ThemedText style={{ color: 'lightblue' }}>Click here to register if you are a new user</ThemedText>
         </ExternalLink>
       </ParallaxScrollView>
