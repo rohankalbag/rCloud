@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, Modal, TextInput } from 'react-native';
 import { ExternalLink } from '@/components/ExternalLink';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
@@ -12,6 +12,8 @@ export default function FileExplorerScreen() {
     const [relpath, setRelpath] = useState('');
     const [files, setFiles] = useState<[string, string][]>([]);
     const [directories, setDirectories] = useState<[string, string][]>([]);
+    const [newFolderName, setNewFolderName] = useState('Untitled');
+    const [dialogVisible, setDialogVisible] = useState(false);
 
     const fetchFilesAndFolders = (path = '') => {
         const pathDetails = {
@@ -40,6 +42,36 @@ export default function FileExplorerScreen() {
             })
             .catch(error => alert(error));
     };
+
+
+    const createNewDirectory = (path: string) => {
+        const pathDetails = {
+            path: path
+        }
+
+        let url = "http://localhost:3000/mkdir";
+        fetch(
+            url,
+            {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRFToken': csrfToken ? csrfToken : '',
+                },
+                body: JSON.stringify(pathDetails),
+                credentials: 'include'
+            }
+        )
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                fetchFilesAndFolders(relpath);
+            })
+            .catch(error => alert(error));
+    };
+
+
 
     useEffect(() => {
         if (user) {
@@ -73,21 +105,30 @@ export default function FileExplorerScreen() {
                 <ThemedView style={styles.titleContainer}>
                     <ThemedText type="title">Files</ThemedText>
                 </ThemedView>
-                <ThemedView style={{ width: 300, flexDirection: 'row' }}>
+                <ThemedView style={{ width: 600, flexDirection: 'row' }}>
                     <ThemedText style={{ fontFamily: "SpaceMono", marginRight: 30 }}>
                         {'🏠: ' + relpath}
                     </ThemedText>
                     {
                         relpath !== "" &&
-                        <Pressable onPress={() => { const lastSlashIndex = relpath.lastIndexOf('/'); setRelpath(relpath.slice(0, lastSlashIndex)); }}>
-                            <Ionicons name="arrow-back-outline" size={25} color="green" />
+                        <Pressable onPress={() => { const lastSlashIndex = relpath.lastIndexOf('/'); setRelpath(relpath.slice(0, lastSlashIndex)) }}>
+                            <ThemedView style={{ width: 75, flexDirection: 'row', backgroundColor: 'grey', borderRadius: 10 }}>
+                                <Ionicons name="arrow-back-outline" size={25} color="white" />
+                                <ThemedText style={{ marginLeft: 5, color: 'white' }}>Back</ThemedText>
+                            </ThemedView>
                         </Pressable>
                     }
+                    <Pressable onPress={() => { setNewFolderName("Untitled"); setDialogVisible(true) }}>
+                        <ThemedView style={{ width: 125, flexDirection: 'row', backgroundColor: 'grey', borderRadius: 10, paddingLeft: 5, marginLeft: 10 }}>
+                            <Ionicons name="add-circle-outline" size={25} color="white" />
+                            <ThemedText style={{ marginLeft: 5, color: 'white' }}>New Folder</ThemedText>
+                        </ThemedView>
+                    </Pressable>
                 </ThemedView>
 
 
                 {directories.map((dir, ind) => (
-                    <Pressable key={`dir-${ind}`} onPress={() => { setRelpath(relpath + '/' + dir); fetchFilesAndFolders(relpath); }} style={styles.item}>
+                    <Pressable key={`dir-${ind}`} onPress={() => { setRelpath(relpath + '/' + dir) }} style={styles.item}>
                         <Ionicons name="folder-outline" size={20} color="orange" />
                         <ThemedText style={styles.itemText}>{dir}</ThemedText>
                     </Pressable>
@@ -95,10 +136,40 @@ export default function FileExplorerScreen() {
 
                 {files.map((file, ind) => (
                     <ThemedView key={`file-${ind}`} style={styles.item}>
-                        <Ionicons name="document-outline" size={20} color="blue" />
+                        <Ionicons name="document-outline" size={20} color="yellow" />
                         <ThemedText style={styles.itemText}>{file}</ThemedText>
                     </ThemedView>
                 ))}
+
+                <Modal
+                    animationType="fade"
+                    transparent={true}
+                    visible={dialogVisible}
+                    onRequestClose={() => {
+                        setDialogVisible(false);
+                    }}>
+                    <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                        <ThemedText style={{ padding: 10 }}>Enter Folder Name</ThemedText>
+                        <ThemedView style={{
+                            borderColor: 'white', borderWidth: 1, width: 250, marginTop: 10,
+                            marginBottom: 10
+                        }}>
+                            <TextInput placeholder="" value={newFolderName} onChangeText={(text) => setNewFolderName(text)} style={styles.dateInput} />
+                        </ThemedView>
+                        <ThemedView style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+                            <Pressable onPress={() => { createNewDirectory(relpath + '/' + newFolderName); setDialogVisible(false) }}>
+                                <ThemedView style={{ width: 60, flexDirection: 'row', backgroundColor: 'grey', borderRadius: 10, padding: 5, margin: 10 }}>
+                                    <ThemedText>Create</ThemedText>
+                                </ThemedView>
+                            </Pressable>
+                            <Pressable onPress={() => { setDialogVisible(false) }}>
+                                <ThemedView style={{ width: 60, flexDirection: 'row', backgroundColor: 'grey', borderRadius: 10, padding: 5, margin: 10 }}>
+                                    <ThemedText>Cancel</ThemedText>
+                                </ThemedView>
+                            </Pressable>
+                        </ThemedView>
+                    </ThemedView>
+                </Modal>
 
             </ParallaxScrollView>
         );

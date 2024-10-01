@@ -8,14 +8,14 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import DatePickerComponent from '@/components/DatePicker';
 import { TextInput, Pressable } from 'react-native';
-import { useState} from 'react';
+import { useState } from 'react';
 import { useAppContext } from '@/components/StateContext';
 
 export default function RegisterScreen() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [dob, setDob] = useState('');
-    const { user, setUser, csrfToken, setcsrfToken} = useAppContext();
+    const { user, setUser, csrfToken, setcsrfToken } = useAppContext();
 
     const clearForm = () => {
         setUsername('');
@@ -62,7 +62,7 @@ export default function RegisterScreen() {
 
     const handlelogout = () => {
         setUser(null);
-        
+
         fetch("http://localhost:3000/logout", {
             method: "GET",
             credentials: 'include'
@@ -71,7 +71,7 @@ export default function RegisterScreen() {
             .then(data => alert(data.message))
             .catch(error => alert(error));
     }
-    
+
     if (user === null) {
         return (
             <ParallaxScrollView

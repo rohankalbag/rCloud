@@ -56,7 +56,7 @@ def get_users():
         return jsonify({'message': 'Please login to view users!'}), 401
     csrf_token = request.headers.get('X-CSRFToken')
     if not csrf_token or csrf_token != session.get('csrf_token'):
-        return jsonify({'message': 'Invalid CSRF token'}), 403 
+        return jsonify({'message': 'Invalid CSRF token'}), 403
     users = User.query.all()
     return jsonify([(user.username, user.dob.strftime("%-d %B %Y")) for user in users])
 
@@ -177,7 +177,7 @@ def list_files():
 @app.route('/mkdir', methods=['POST'])
 def make_directory():
     if 'user' not in session:
-        return jsonify({'message': 'Please login to create directories!'}), 401 
+        return jsonify({'message': 'Please login to create directories!'}), 401
     csrf_token = request.headers.get('X-CSRFToken')
     if not csrf_token or csrf_token != session.get('csrf_token'):
         return jsonify({'error': 'Invalid CSRF token'}), 403
@@ -185,9 +185,9 @@ def make_directory():
     if 'path' not in data:
         return jsonify({'message': 'Invalid request! parameter "path" not specified'}), 400
     rel_path = data["path"]
-    if not os.path.exists(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user'], rel_path)):
+    if not os.path.exists(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user']) + rel_path):
         os.mkdir(os.path.join(CLOUD_STORAGE_ROOT_PATH,
-                 session['user'], rel_path))
+                 session['user']) + rel_path)
         return jsonify({'message': 'Directory created successfully!'})
     else:
         return jsonify({'message': 'Directory already exists!'}), 400
