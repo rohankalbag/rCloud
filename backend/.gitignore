@@ -2,3 +2,4 @@
 instance
 /tests
 config.json
+/flask_session

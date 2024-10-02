@@ -7,6 +7,7 @@ import os
 from flask import session
 import json
 from flask_wtf.csrf import generate_csrf
+from flask_session import Session
 
 app = Flask(__name__)
 
@@ -15,12 +16,15 @@ with app.app_context():
         config = json.load(f)
     app.config["SQLALCHEMY_DATABASE_URI"] = config["SQLALCHEMY_DATABASE_URI"]
     app.config["SECRET_KEY"] = config["SECRET_KEY"]
+    app.config["SESSION_PERMANENT"] = False
+    app.config["SESSION_TYPE"] = "filesystem"
     CLOUD_STORAGE_ROOT_PATH = config["CLOUD_STORAGE_ROOT_PATH"]
 
 CORS(app, resources={
      r"/*": {"origins": "http://localhost:8081"}}, supports_credentials=True)
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'py'}
 db = SQLAlchemy(app)
+Session(app)
 
 
 def allowed_file(filename): return '.' in filename and filename.rsplit(
@@ -139,18 +143,19 @@ def upload_file():
 
     rel_path = request.form.get("path")
 
-    if not os.path.exists(os.path.join(user.cloudpath, rel_path)):
+    if not os.path.exists(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user']) + rel_path):
         return jsonify({'message': 'No such directory path exists'}), 400
 
     try:
-        file.save(os.path.join(user.cloudpath, rel_path, file.filename))
+        file.save(os.path.join(CLOUD_STORAGE_ROOT_PATH,
+                  session['user']) + rel_path + f"/{file.filename}")
     except:
         return jsonify({'message': 'Error saving file!'}), 500
 
     return jsonify({'message': 'File uploaded successfully!'})
 
 
-@app.route('/list', methods=['POST', 'OPTIONS'])
+@app.route('/ls', methods=['POST', 'OPTIONS'])
 def list_files():
     if request.method == 'OPTIONS':
         return jsonify({'message': 'CORS OK'}), 200
@@ -193,7 +198,7 @@ def make_directory():
         return jsonify({'message': 'Directory already exists!'}), 400
 
 
-@app.route('/rmfile', methods=['POST'])
+@app.route('/rm', methods=['POST'])
 def remove_file():
     if 'user' not in session:
         return jsonify({'message': 'Please login to remove files!'}), 401
@@ -207,10 +212,10 @@ def remove_file():
         return jsonify({'message': 'Invalid request! parameter "filename" not specified'}), 400
     rel_path = data["path"]
     file_name = data["filename"]
-    if not os.path.exists(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user'], rel_path, file_name)):
+    if not os.path.exists(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user']) + rel_path + f"/{file_name}"):
         return jsonify({'message': 'No such file exists!'}), 400
     os.remove(os.path.join(CLOUD_STORAGE_ROOT_PATH,
-              session['user'], rel_path, file_name))
+              session['user']) + rel_path + f"/{file_name}")
     return jsonify({'message': 'File removed successfully!'})
 
 
@@ -225,11 +230,11 @@ def remove_directory():
     if 'path' not in data:
         return jsonify({'message': 'Invalid request! parameter "path" not specified'}), 400
     rel_path = data["path"]
-    if not os.path.exists(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user'], rel_path)):
+    if not os.path.exists(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user']) + rel_path):
         return jsonify({'message': 'No such directory exists!'}), 400
-    if os.listdir(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user'], rel_path)):
+    if os.listdir(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user']) + rel_path):
         return jsonify({'message': 'Directory is not empty!'}), 400
-    os.rmdir(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user'], rel_path))
+    os.rmdir(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user']) + rel_path)
     return jsonify({'message': 'Directory removed successfully!'})
 
 

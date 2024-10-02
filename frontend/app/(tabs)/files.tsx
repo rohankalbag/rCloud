@@ -6,6 +6,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useState, useEffect } from 'react';
 import { useAppContext } from '@/components/StateContext';
+import * as DocumentPicker from 'expo-document-picker';
 
 export default function FileExplorerScreen() {
     const { user, setUser, csrfToken, setcsrfToken } = useAppContext();
@@ -20,7 +21,7 @@ export default function FileExplorerScreen() {
             path: path
         }
 
-        let url = "http://localhost:3000/list";
+        let url = "http://localhost:3000/ls";
         fetch(
             url,
             {
@@ -36,7 +37,6 @@ export default function FileExplorerScreen() {
         )
             .then(response => response.json())
             .then(data => {
-                console.log(data);
                 setDirectories(data.directories);
                 setFiles(data.files);
             })
@@ -71,6 +71,88 @@ export default function FileExplorerScreen() {
             .catch(error => alert(error));
     };
 
+    const sendFilesToServer = (files: Array<File | undefined>) => {
+        files.filter(file => typeof file !== "undefined").forEach(
+            (file) => {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('path', relpath);
+                fetch(
+                    "http://localhost:3000/upload",
+                    {
+                        method: "POST",
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRFToken': csrfToken ? csrfToken : '',
+                        },
+                        body: formData,
+                        credentials: 'include'
+                    }
+                )
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        fetchFilesAndFolders(relpath);
+                    })
+                    .catch(error => alert(error));
+            }
+        );
+    };
+
+    const deleteFile = (filename: string[]) => {
+        const pathDetails = {
+            path: relpath,
+            filename: filename
+        }
+
+        let url = "http://localhost:3000/rm";
+        fetch(
+            url,
+            {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRFToken': csrfToken ? csrfToken : '',
+                },
+                body: JSON.stringify(pathDetails),
+                credentials: 'include'
+            }
+        )
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                fetchFilesAndFolders(relpath);
+            })
+            .catch(error => alert(error));
+    }
+
+    const deleteFolder = (dirname: string[]) => {
+        const pathDetails = {
+            path: relpath + '/' + dirname
+        }
+
+        let url = "http://localhost:3000/rmdir";
+        fetch(
+            url,
+            {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRFToken': csrfToken ? csrfToken : '',
+                },
+                body: JSON.stringify(pathDetails),
+                credentials: 'include'
+            }
+        )
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                fetchFilesAndFolders(relpath);
+            })
+            .catch(error => alert(error));
+    }
 
 
     useEffect(() => {
@@ -124,6 +206,20 @@ export default function FileExplorerScreen() {
                             <ThemedText style={{ marginLeft: 5, color: 'white' }}>New Folder</ThemedText>
                         </ThemedView>
                     </Pressable>
+
+                    <Pressable onPress={async () => {
+                        const result = await DocumentPicker.getDocumentAsync({ multiple: true });
+                        if (!result.canceled) {
+                            const files = result.assets;
+                            // TODO: handled for web, need to handle for mobile
+                            sendFilesToServer(files.map((f) => (f.file)));
+                        }
+                    }}>
+                        <ThemedView style={{ width: 100, flexDirection: 'row', backgroundColor: 'grey', borderRadius: 10, paddingLeft: 5, marginLeft: 10 }}>
+                            <Ionicons name="cloud-upload-outline" size={25} color="white" />
+                            <ThemedText style={{ marginLeft: 5, color: 'white' }}>Upload</ThemedText>
+                        </ThemedView>
+                    </Pressable>
                 </ThemedView>
 
 
@@ -131,6 +227,9 @@ export default function FileExplorerScreen() {
                     <Pressable key={`dir-${ind}`} onPress={() => { setRelpath(relpath + '/' + dir) }} style={styles.item}>
                         <Ionicons name="folder-outline" size={20} color="orange" />
                         <ThemedText style={styles.itemText}>{dir}</ThemedText>
+                        <Pressable onPress={() => { deleteFolder(dir) }} style={{ marginLeft: 30 }}>
+                            <Ionicons name="trash-outline" size={20} color="red" />
+                        </Pressable>
                     </Pressable>
                 ))}
 
@@ -138,6 +237,9 @@ export default function FileExplorerScreen() {
                     <ThemedView key={`file-${ind}`} style={styles.item}>
                         <Ionicons name="document-outline" size={20} color="yellow" />
                         <ThemedText style={styles.itemText}>{file}</ThemedText>
+                        <Pressable onPress={() => { deleteFile(file) }} style={{ marginLeft: 30 }}>
+                            <Ionicons name="trash-outline" size={20} color="red" />
+                        </Pressable>
                     </ThemedView>
                 ))}
 

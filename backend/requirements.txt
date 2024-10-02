@@ -3,3 +3,4 @@ Flask-SQLAlchemy
 SQLAlchemy
 flask-cors
 Flask-WTF
+Flask-Session 
