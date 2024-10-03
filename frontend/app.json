@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "rCloudExpo",
-    "slug": "rCloudExpo",
+    "name": "rCloud",
+    "slug": "rcloud",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -31,6 +31,7 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "owner": "rohankalbag"
   }
 }

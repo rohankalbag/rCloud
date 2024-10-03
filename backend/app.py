@@ -8,6 +8,7 @@ from flask import session
 import json
 from flask_wtf.csrf import generate_csrf
 from flask_session import Session
+from waitress import serve
 
 app = Flask(__name__)
 
@@ -19,9 +20,10 @@ with app.app_context():
     app.config["SESSION_PERMANENT"] = False
     app.config["SESSION_TYPE"] = "filesystem"
     CLOUD_STORAGE_ROOT_PATH = config["CLOUD_STORAGE_ROOT_PATH"]
+    DEPLOY_TO_PROD = config["DEPLOY_TO_PROD"]
 
 CORS(app, resources={
-     r"/*": {"origins": "http://localhost:8081"}}, supports_credentials=True)
+     r"/*": {"origins": "*"}}, supports_credentials=True)
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'py'}
 db = SQLAlchemy(app)
 Session(app)
@@ -239,4 +241,7 @@ def remove_directory():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=3000)
+    if DEPLOY_TO_PROD:
+        serve(app, host="0.0.0.0", port=3000)
+    else:
+        app.run(host="0.0.0.0", debug=True, port=3000)

@@ -21,7 +21,7 @@ export default function FileExplorerScreen() {
             path: path
         }
 
-        let url = "http://localhost:3000/ls";
+        let url = `${process.env.EXPO_PUBLIC_BACKEND_API_URL}/ls`;
         fetch(
             url,
             {
@@ -49,7 +49,7 @@ export default function FileExplorerScreen() {
             path: path
         }
 
-        let url = "http://localhost:3000/mkdir";
+        let url = `${process.env.EXPO_PUBLIC_BACKEND_API_URL}/mkdir`;
         fetch(
             url,
             {
@@ -78,7 +78,7 @@ export default function FileExplorerScreen() {
                 formData.append('file', file);
                 formData.append('path', relpath);
                 fetch(
-                    "http://localhost:3000/upload",
+                    `${process.env.EXPO_PUBLIC_BACKEND_API_URL}/upload`,
                     {
                         method: "POST",
                         headers: {
@@ -105,7 +105,7 @@ export default function FileExplorerScreen() {
             filename: filename
         }
 
-        let url = "http://localhost:3000/rm";
+        let url = `${process.env.EXPO_PUBLIC_BACKEND_API_URL}/rm`;
         fetch(
             url,
             {
@@ -132,7 +132,7 @@ export default function FileExplorerScreen() {
             path: relpath + '/' + dirname
         }
 
-        let url = "http://localhost:3000/rmdir";
+        let url = `${process.env.EXPO_PUBLIC_BACKEND_API_URL}/rmdir`;
         fetch(
             url,
             {

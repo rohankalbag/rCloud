@@ -28,7 +28,8 @@ export default function LoginScreen() {
         password: password,
       }
 
-      let url = "http://localhost:3000/login";
+      let url = `${process.env.EXPO_PUBLIC_BACKEND_API_URL}/login`;
+      console.log(url);
       fetch(
         url,
         {
@@ -55,7 +56,7 @@ export default function LoginScreen() {
 
   const handlelogout = () => {
     setUser(null);
-    fetch("http://localhost:3000/logout", {
+    fetch(`${process.env.EXPO_PUBLIC_BACKEND_API_URL}/logout`, {
       method: "GET",
       credentials: 'include'
     })

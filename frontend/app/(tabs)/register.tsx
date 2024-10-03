@@ -34,7 +34,7 @@ export default function RegisterScreen() {
                 dob: dob
             }
 
-            let url = "http://localhost:3000/register";
+            let url = `${process.env.EXPO_PUBLIC_BACKEND_API_URL}/register`;
             fetch(
                 url,
                 {
@@ -63,7 +63,7 @@ export default function RegisterScreen() {
     const handlelogout = () => {
         setUser(null);
 
-        fetch("http://localhost:3000/logout", {
+        fetch(`${process.env.EXPO_PUBLIC_BACKEND_API_URL}/logout`, {
             method: "GET",
             credentials: 'include'
         })
