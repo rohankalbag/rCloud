@@ -96,10 +96,6 @@ export default function LoginScreen() {
         <Pressable style={{ marginLeft: 30, width: 85, backgroundColor: 'lightblue', padding: 10 }} onPress={handlelogin}>
           <ThemedText style={{ color: 'black' }}> Submit </ThemedText>
         </Pressable>
-
-        <ExternalLink href="/register">
-          <ThemedText style={{ color: 'lightblue' }}>Click here to register if you are a new user</ThemedText>
-        </ExternalLink>
       </ParallaxScrollView>
     );
   }

@@ -15,6 +15,7 @@ export default function FileExplorerScreen() {
     const [directories, setDirectories] = useState<[string, string][]>([]);
     const [newFolderName, setNewFolderName] = useState('Untitled');
     const [dialogVisible, setDialogVisible] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
     const fetchFilesAndFolders = (path = '') => {
         const pathDetails = {
@@ -77,6 +78,7 @@ export default function FileExplorerScreen() {
                 const formData = new FormData();
                 formData.append('file', file);
                 formData.append('path', relpath);
+                setIsUploading(true);
                 fetch(
                     `${process.env.EXPO_PUBLIC_BACKEND_API_URL}/upload`,
                     {
@@ -93,6 +95,7 @@ export default function FileExplorerScreen() {
                     .then(data => {
                         alert(data.message);
                         fetchFilesAndFolders(relpath);
+                        setIsUploading(false);
                     })
                     .catch(error => alert(error));
             }
@@ -172,10 +175,6 @@ export default function FileExplorerScreen() {
                 <ThemedText>
                     To be able to see your files, you need to be logged in.
                 </ThemedText>
-
-                <ExternalLink href="/login">
-                    <ThemedText style={{ color: 'lightblue' }}>Click here to login</ThemedText>
-                </ExternalLink>
             </ParallaxScrollView>
         );
     }
@@ -187,10 +186,10 @@ export default function FileExplorerScreen() {
                 <ThemedView style={styles.titleContainer}>
                     <ThemedText type="title">Files</ThemedText>
                 </ThemedView>
+                <ThemedText style={{ fontFamily: "SpaceMono", marginRight: 30 }}>
+                    {'🏠: ' + relpath}
+                </ThemedText>
                 <ThemedView style={{ width: 600, flexDirection: 'row' }}>
-                    <ThemedText style={{ fontFamily: "SpaceMono", marginRight: 30 }}>
-                        {'🏠: ' + relpath}
-                    </ThemedText>
                     {
                         relpath !== "" &&
                         <Pressable onPress={() => { const lastSlashIndex = relpath.lastIndexOf('/'); setRelpath(relpath.slice(0, lastSlashIndex)) }}>
@@ -222,6 +221,12 @@ export default function FileExplorerScreen() {
                     </Pressable>
                 </ThemedView>
 
+                {isUploading &&
+                    <ThemedView style={{ width: 600, flexDirection: 'row' }}>
+                        <ThemedText style={{ color: 'yellow', padding: 30, fontSize: 20 }}>Uploading File Please Wait...</ThemedText>
+                    </ThemedView>
+                }
+
 
                 {directories.map((dir, ind) => (
                     <Pressable key={`dir-${ind}`} onPress={() => { setRelpath(relpath + '/' + dir) }} style={styles.item}>
@@ -239,6 +244,12 @@ export default function FileExplorerScreen() {
                         <ThemedText style={styles.itemText}>{file}</ThemedText>
                         <Pressable onPress={() => { deleteFile(file) }} style={{ marginLeft: 30 }}>
                             <Ionicons name="trash-outline" size={20} color="red" />
+                        </Pressable>
+                        
+                        <Pressable onPress={() => {
+                            // TODO: Add download functionality
+                            }} style={{ marginLeft: 30 }}>
+                            <Ionicons name="download-outline" size={20} color="orange" />
                         </Pressable>
                     </ThemedView>
                 ))}

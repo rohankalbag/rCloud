@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from hashlib import sha256
@@ -9,6 +9,9 @@ import json
 from flask_wtf.csrf import generate_csrf
 from flask_session import Session
 from waitress import serve
+from werkzeug.utils import secure_filename
+
+API_PREFIX = ""
 
 app = Flask(__name__)
 
@@ -19,12 +22,13 @@ with app.app_context():
     app.config["SECRET_KEY"] = config["SECRET_KEY"]
     app.config["SESSION_PERMANENT"] = False
     app.config["SESSION_TYPE"] = "filesystem"
+    app.config['MAX_CONTENT_LENGTH'] = 100 * 1000 * 1000
     CLOUD_STORAGE_ROOT_PATH = config["CLOUD_STORAGE_ROOT_PATH"]
     DEPLOY_TO_PROD = config["DEPLOY_TO_PROD"]
 
 CORS(app, resources={
      r"/*": {"origins": "*"}}, supports_credentials=True)
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'py'}
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'zip', 'tar', 'mp3', 'mp4', 'mkv'}
 db = SQLAlchemy(app)
 Session(app)
 
@@ -49,14 +53,14 @@ with app.app_context():
     db.create_all()
 
 
-@app.route('/', methods=['GET'])
+@app.route(API_PREFIX + '/', methods=['GET'])
 def home():
     if 'user' in session:
         return f'Welcome to RCloud, {session["user"]}!'
     return 'Welcome to RCloud, please login!'
 
 
-@app.route('/users', methods=['GET'])
+@app.route(API_PREFIX + '/users', methods=['GET'])
 def get_users():
     if 'user' not in session:
         return jsonify({'message': 'Please login to view users!'}), 401
@@ -67,7 +71,7 @@ def get_users():
     return jsonify([(user.username, user.dob.strftime("%-d %B %Y")) for user in users])
 
 
-@app.route('/register', methods=['POST', 'OPTIONS'])
+@app.route(API_PREFIX + '/register', methods=['POST', 'OPTIONS'])
 def register():
     if request.method == 'OPTIONS':
         return jsonify({'message': 'CORS OK'}), 200
@@ -96,7 +100,7 @@ def register():
     })
 
 
-@app.route('/login', methods=['POST', 'OPTIONS'])
+@app.route(API_PREFIX + '/login', methods=['POST', 'OPTIONS'])
 def login():
     if request.method == 'OPTIONS':
         return jsonify({'message': 'CORS OK'}), 200
@@ -117,13 +121,13 @@ def login():
         return jsonify({'message': 'Invalid credentials!'}), 401
 
 
-@app.route('/logout', methods=['GET'])
+@app.route(API_PREFIX + '/logout', methods=['GET'])
 def logout():
     session.pop('user', None)
     return jsonify({'message': 'Logged out successfully!'})
 
 
-@app.route('/upload', methods=['POST'])
+@app.route(API_PREFIX + '/upload', methods=['POST'])
 def upload_file():
     if 'user' not in session:
         return jsonify({'message': 'Please login to upload files!'}), 401
@@ -150,14 +154,14 @@ def upload_file():
 
     try:
         file.save(os.path.join(CLOUD_STORAGE_ROOT_PATH,
-                  session['user']) + rel_path + f"/{file.filename}")
+                  session['user']) + rel_path + f"/{secure_filename(file.filename)}")
     except:
         return jsonify({'message': 'Error saving file!'}), 500
 
     return jsonify({'message': 'File uploaded successfully!'})
 
 
-@app.route('/ls', methods=['POST', 'OPTIONS'])
+@app.route(API_PREFIX + '/ls', methods=['POST', 'OPTIONS'])
 def list_files():
     if request.method == 'OPTIONS':
         return jsonify({'message': 'CORS OK'}), 200
@@ -181,7 +185,7 @@ def list_files():
     return jsonify({'directories': directories, 'files': files})
 
 
-@app.route('/mkdir', methods=['POST'])
+@app.route(API_PREFIX + '/mkdir', methods=['POST'])
 def make_directory():
     if 'user' not in session:
         return jsonify({'message': 'Please login to create directories!'}), 401
@@ -192,15 +196,15 @@ def make_directory():
     if 'path' not in data:
         return jsonify({'message': 'Invalid request! parameter "path" not specified'}), 400
     rel_path = data["path"]
-    if not os.path.exists(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user']) + rel_path):
+    if not os.path.exists(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user']) + secure_filename(rel_path)):
         os.mkdir(os.path.join(CLOUD_STORAGE_ROOT_PATH,
-                 session['user']) + rel_path)
+                 session['user']) + secure_filename(rel_path))
         return jsonify({'message': 'Directory created successfully!'})
     else:
         return jsonify({'message': 'Directory already exists!'}), 400
 
 
-@app.route('/rm', methods=['POST'])
+@app.route(API_PREFIX + '/rm', methods=['POST'])
 def remove_file():
     if 'user' not in session:
         return jsonify({'message': 'Please login to remove files!'}), 401
@@ -221,7 +225,7 @@ def remove_file():
     return jsonify({'message': 'File removed successfully!'})
 
 
-@app.route('/rmdir', methods=['POST'])
+@app.route(API_PREFIX + '/rmdir', methods=['POST'])
 def remove_directory():
     if 'user' not in session:
         return jsonify({'message': 'Please login to remove directories!'}), 401
@@ -239,6 +243,23 @@ def remove_directory():
     os.rmdir(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user']) + rel_path)
     return jsonify({'message': 'Directory removed successfully!'})
 
+@app.route(API_PREFIX + '/download', methods=['POST'])
+def download_file():
+    if 'user' not in session:
+        return jsonify({'message': 'Please login to download files!'}), 401
+    csrf_token = request.headers.get('X-CSRFToken')
+    if not csrf_token or csrf_token != session.get('csrf_token'):
+        return jsonify({'error': 'Invalid CSRF token'}), 403
+    data = request.json
+    if 'path' not in data:
+        return jsonify({'message': 'Invalid request! parameter "path" not specified'}), 400
+    if 'filename' not in data:
+        return jsonify({'message': 'Invalid request! parameter "filename" not specified'}), 400
+    rel_path = data["path"]
+    file_name = secure_filename(data["filename"])
+    if not os.path.exists(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user']) + rel_path + f"/{file_name}"):
+        return jsonify({'message': 'No such file exists!'}), 400
+    return send_file(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user']) + rel_path + f"/{file_name}", as_attachment=True, attachment_filename=file_name)
 
 if __name__ == '__main__':
     if DEPLOY_TO_PROD:
