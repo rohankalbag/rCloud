@@ -1,6 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet } from 'react-native';
-import { ExternalLink } from '@/components/ExternalLink';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -24,12 +23,11 @@ export default function LoginScreen() {
       return;
     } else {
       const userDetails = {
-        username: username,
-        password: password,
+        username: username.trim(),
+        password: password.trim(),
       }
 
       let url = `${process.env.EXPO_PUBLIC_BACKEND_API_URL}/login`;
-      console.log(url);
       fetch(
         url,
         {
@@ -47,8 +45,8 @@ export default function LoginScreen() {
           if (data.message === 'Login successful!') {
             setUser(username);
             setcsrfToken(data.csrf_token);
+            clearForm();
           }
-          clearForm();
         })
         .catch(error => alert(error));
     }

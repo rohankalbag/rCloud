@@ -1,8 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet } from 'react-native';
-
 import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -52,8 +50,8 @@ export default function RegisterScreen() {
                     if (data.message === 'User registered successfully!') {
                         setUser(username);
                         setcsrfToken(data.csrf_token);
+                        clearForm();
                     }
-                    clearForm();
                 }
                 )
                 .catch(error => alert(error));

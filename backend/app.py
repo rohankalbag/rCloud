@@ -22,7 +22,7 @@ with app.app_context():
     app.config["SECRET_KEY"] = config["SECRET_KEY"]
     app.config["SESSION_PERMANENT"] = False
     app.config["SESSION_TYPE"] = "filesystem"
-    app.config['MAX_CONTENT_LENGTH'] = 100 * 1000 * 1000
+    app.config['MAX_CONTENT_LENGTH'] = 1000 * 1000 * 1000
     CLOUD_STORAGE_ROOT_PATH = config["CLOUD_STORAGE_ROOT_PATH"]
     DEPLOY_TO_PROD = config["DEPLOY_TO_PROD"]
 
@@ -195,10 +195,10 @@ def make_directory():
     data = request.json
     if 'path' not in data:
         return jsonify({'message': 'Invalid request! parameter "path" not specified'}), 400
-    rel_path = data["path"]
-    if not os.path.exists(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user']) + secure_filename(rel_path)):
+    rel_path = data["path"].strip("/")
+    if not os.path.exists(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user']) + "/" + secure_filename(rel_path)):
         os.mkdir(os.path.join(CLOUD_STORAGE_ROOT_PATH,
-                 session['user']) + secure_filename(rel_path))
+                 session['user']) + "/" + secure_filename(rel_path))
         return jsonify({'message': 'Directory created successfully!'})
     else:
         return jsonify({'message': 'Directory already exists!'}), 400
@@ -259,10 +259,10 @@ def download_file():
     file_name = secure_filename(data["filename"])
     if not os.path.exists(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user']) + rel_path + f"/{file_name}"):
         return jsonify({'message': 'No such file exists!'}), 400
-    return send_file(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user']) + rel_path + f"/{file_name}", as_attachment=True, attachment_filename=file_name)
+    return send_file(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user']) + rel_path + f"/{file_name}", as_attachment=True)
 
 if __name__ == '__main__':
     if DEPLOY_TO_PROD:
-        serve(app, host="0.0.0.0", port=3000)
+        serve(app, host="0.0.0.0", port=3000, threads=100)
     else:
         app.run(host="0.0.0.0", debug=True, port=3000)

@@ -1,6 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable, StyleSheet, Modal, TextInput } from 'react-native';
-import { ExternalLink } from '@/components/ExternalLink';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -93,7 +92,6 @@ export default function FileExplorerScreen() {
                 )
                     .then(response => response.json())
                     .then(data => {
-                        alert(data.message);
                         fetchFilesAndFolders(relpath);
                         setIsUploading(false);
                     })
@@ -126,6 +124,38 @@ export default function FileExplorerScreen() {
             .then(data => {
                 alert(data.message);
                 fetchFilesAndFolders(relpath);
+            })
+            .catch(error => alert(error));
+    }
+
+    const downloadFile = (filename: string[]) => {
+        const pathDetails = {
+            path: relpath,
+            filename: filename
+        }
+
+        let url = `${process.env.EXPO_PUBLIC_BACKEND_API_URL}/download`;
+        fetch(
+            url,
+            {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': '*/*',
+                    'X-CSRFToken': csrfToken ? csrfToken : '',
+                },
+                body: JSON.stringify(pathDetails),
+                credentials: 'include'
+            }
+        )
+            .then(response => response.blob())
+            .then(data => {
+                const url = URL.createObjectURL(data);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename.toString();
+                a.click();
+                URL.revokeObjectURL(url);
             })
             .catch(error => alert(error));
     }
@@ -248,7 +278,9 @@ export default function FileExplorerScreen() {
                         
                         <Pressable onPress={() => {
                             // TODO: Add download functionality
-                            }} style={{ marginLeft: 30 }}>
+                            console.log("download pressed");
+                            downloadFile(file);
+                        }} style={{ marginLeft: 30 }}>
                             <Ionicons name="download-outline" size={20} color="orange" />
                         </Pressable>
                     </ThemedView>
