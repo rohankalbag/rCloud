@@ -29,5 +29,7 @@
 3. Ready to deploy ?
 
     ```bash
-   gunicorn -w 4 -b 0.0.0.0:3000 'main:app' --daemon
+   gunicorn -w 4 -b 0.0.0.0:3000 'main:app'
     ```
+
+4. To daemonise create a [daemon process](https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-gunicorn-and-nginx-on-ubuntu-18-04) like in `rcloud.service`
