@@ -8,10 +8,9 @@ from flask import session
 import json
 from flask_wtf.csrf import generate_csrf
 from flask_session import Session
-from waitress import serve
 from werkzeug.utils import secure_filename
 
-API_PREFIX = ""
+API_PREFIX = "/api"
 
 app = Flask(__name__)
 
@@ -24,7 +23,6 @@ with app.app_context():
     app.config["SESSION_TYPE"] = "filesystem"
     app.config['MAX_CONTENT_LENGTH'] = 1000 * 1000 * 1000
     CLOUD_STORAGE_ROOT_PATH = config["CLOUD_STORAGE_ROOT_PATH"]
-    DEPLOY_TO_PROD = config["DEPLOY_TO_PROD"]
 
 CORS(app, resources={
      r"/*": {"origins": "*"}}, supports_credentials=True)
@@ -262,7 +260,4 @@ def download_file():
     return send_file(os.path.join(CLOUD_STORAGE_ROOT_PATH, session['user']) + rel_path + f"/{file_name}", as_attachment=True)
 
 if __name__ == '__main__':
-    if DEPLOY_TO_PROD:
-        serve(app, host="0.0.0.0", port=3000, threads=100)
-    else:
-        app.run(host="0.0.0.0", debug=True, port=3000)
+    app.run(host="0.0.0.0", port=3000, debug=True)

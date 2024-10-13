@@ -16,19 +16,18 @@
     {
         "SQLALCHEMY_DATABASE_URI": "sqlite:///rcloud.db",
         "SECRET_KEY" : "enter_a_strong_secret_key",
-        "CLOUD_STORAGE_ROOT_PATH" : "enter_path_to_your_cloud_filesystem_root_dir",
-        "DEPLOY_TO_PROD" : "either_true_or_false_without_quotes"
+        "CLOUD_STORAGE_ROOT_PATH" : "enter_path_to_your_cloud_filesystem_root_dir"
     }
     ```
 
 2. Start the app for local development
 
    ```bash
-   python3 app.py
+   python3 main.py
    ```
 
-3. Ready to deploy, set `"DEPLOY_TO_PROD"` to `true` in `config.json` and run
+3. Ready to deploy ?
 
     ```bash
-   python3 app.py
+   gunicorn -w 4 -b 0.0.0.0:3000 'main:app' --daemon
     ```

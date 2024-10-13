@@ -3,3 +3,4 @@ instance
 /tests
 config.json
 /flask_session
+__pycache__

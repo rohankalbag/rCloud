@@ -17,7 +17,7 @@ export default function Users() {
     }, [user]);
 
     const getUsers = () => {
-        let url = `${process.env.EXPO_PUBLIC_BACKEND_API_URL}/users`;
+        let url = `/api/users`;
         fetch(
             url,
             {

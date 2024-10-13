@@ -21,7 +21,7 @@ export default function FileExplorerScreen() {
             path: path
         }
 
-        let url = `${process.env.EXPO_PUBLIC_BACKEND_API_URL}/ls`;
+        let url = `/api/ls`;
         fetch(
             url,
             {
@@ -49,7 +49,7 @@ export default function FileExplorerScreen() {
             path: path
         }
 
-        let url = `${process.env.EXPO_PUBLIC_BACKEND_API_URL}/mkdir`;
+        let url = `/api/mkdir`;
         fetch(
             url,
             {
@@ -79,7 +79,7 @@ export default function FileExplorerScreen() {
                 formData.append('path', relpath);
                 setIsUploading(true);
                 fetch(
-                    `${process.env.EXPO_PUBLIC_BACKEND_API_URL}/upload`,
+                    `/api/upload`,
                     {
                         method: "POST",
                         headers: {
@@ -92,10 +92,14 @@ export default function FileExplorerScreen() {
                 )
                     .then(response => response.json())
                     .then(data => {
+                        alert(data.message);
                         fetchFilesAndFolders(relpath);
                         setIsUploading(false);
                     })
-                    .catch(error => alert(error));
+                    .catch(error => {
+                        alert(error);
+                        setIsUploading(false);
+                    });
             }
         );
     };
@@ -106,7 +110,7 @@ export default function FileExplorerScreen() {
             filename: filename
         }
 
-        let url = `${process.env.EXPO_PUBLIC_BACKEND_API_URL}/rm`;
+        let url = `/api/rm`;
         fetch(
             url,
             {
@@ -134,7 +138,7 @@ export default function FileExplorerScreen() {
             filename: filename
         }
 
-        let url = `${process.env.EXPO_PUBLIC_BACKEND_API_URL}/download`;
+        let url = `/api/download`;
         fetch(
             url,
             {
@@ -165,7 +169,7 @@ export default function FileExplorerScreen() {
             path: relpath + '/' + dirname
         }
 
-        let url = `${process.env.EXPO_PUBLIC_BACKEND_API_URL}/rmdir`;
+        let url = `/api/rmdir`;
         fetch(
             url,
             {

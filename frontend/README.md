@@ -16,9 +16,8 @@ This is a React Native app using the [Expo](https://expo.dev) framework created 
     npx expo start
    ```
 
-3. Ready to deploy it
+3. Ready to build it for deployment ?
 
    ```bash
-   chmod +x build_serve_app.sh
-   ./build_serve_app
+   npx expo export --platform web -c
    ```

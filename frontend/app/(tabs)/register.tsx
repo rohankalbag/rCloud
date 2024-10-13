@@ -32,7 +32,7 @@ export default function RegisterScreen() {
                 dob: dob
             }
 
-            let url = `${process.env.EXPO_PUBLIC_BACKEND_API_URL}/register`;
+            let url = `/api/register`;
             fetch(
                 url,
                 {
@@ -61,7 +61,7 @@ export default function RegisterScreen() {
     const handlelogout = () => {
         setUser(null);
 
-        fetch(`${process.env.EXPO_PUBLIC_BACKEND_API_URL}/logout`, {
+        fetch(`/api/logout`, {
             method: "GET",
             credentials: 'include'
         })
